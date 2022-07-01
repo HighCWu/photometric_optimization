@@ -255,7 +255,7 @@ class FLAMETex(nn.Module):
     def forward(self, texcode):
         diff_albedo = self.diff_mean + (self.diff_basis*texcode[:,None,:]).sum(-1)
         spec_albedo = self.spec_mean + (self.spec_basis*texcode[:,None,:]).sum(-1)
-        texture = torch.pow(0.6 * (diff_albedo + spec_albedo) + 1e-8, 1.0 / 2.2)
+        texture = 255 * torch.pow(0.6 * (diff_albedo + spec_albedo).abs() + 1e-8, 1.0 / 2.2)
         texture = texture.reshape(texcode.shape[0], 512, 512, 3).permute(0,3,1,2)
         texture = F.interpolate(texture, [256, 256])
         texture = texture[:,[2,1,0],:,:]
