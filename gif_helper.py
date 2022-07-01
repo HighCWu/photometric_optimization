@@ -56,12 +56,12 @@ if __name__ == '__main__':
         # FLAME
         'flame_model_path': './data/model.pkl',  # acquire it from FLAME project page
         'flame_lmk_embedding_path': './data/landmark_embedding.npy',
-        'tex_space_path': './data/FLAME_texture.npz',  # acquire it from FLAME project page
+        'flame_albedo_tex_space_path': './data/albedoModel2020_FLAME_albedoPart.npz',  # download it from AlbedoMM release page
         'camera_params': 3,
         'shape_params': 100,
         'expression_params': 50,
         'pose_params': 6,
-        'tex_params': 50,
+        'tex_params': 145,
         'use_face_contour': True,
 
         'cropped_size': 256,

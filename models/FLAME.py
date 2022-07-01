@@ -219,26 +219,46 @@ class FLAME(nn.Module):
 
 class FLAMETex(nn.Module):
     """
-    current FLAME texture are adapted from BFM Texture Model
+    Current FLAME texture are registered from AlbedoMM
+    Refer to https://github.com/waps101/AlbedoMM/issues/8
     """
 
     def __init__(self, config):
         super(FLAMETex, self).__init__()
+        mu_key = 'MU'
+        pc_key = 'PC'
+        spec_MU = 'specMU'
+        spec_PC = 'specPC'
+
+        tex_path = config.flame_albedo_tex_space_path
+        tex_space = np.load(tex_path)
+        n_pc = tex_space[pc_key].shape[-1]
+
+        diff_mean = tex_space[mu_key].reshape(1, -1)
+        diff_basis = tex_space[pc_key].reshape(-1, n_pc)
+
+        spec_mean = tex_space[spec_MU].reshape(1,-1)
+        spec_basis = tex_space[spec_PC].reshape(-1,n_pc)
+        
         tex_params = config.tex_params
-        tex_space = np.load(config.tex_space_path)
-        texture_mean = tex_space['mean'].reshape(1, -1)
-        texture_basis = tex_space['tex_dir'].reshape(-1, 200)
-        num_components = texture_basis.shape[1]
-        texture_mean = torch.from_numpy(texture_mean).float()[None,...]
-        texture_basis = torch.from_numpy(texture_basis[:,:tex_params]).float()[None,...]
-        self.register_buffer('texture_mean', texture_mean)
-        self.register_buffer('texture_basis', texture_basis)
+        diff_mean = torch.from_numpy(diff_mean).float()[None,...]
+        diff_basis = torch.from_numpy(diff_basis[:,:tex_params]).float()[None,...]
+
+        spec_mean = torch.from_numpy(spec_mean).float()[None,...]
+        spec_basis = torch.from_numpy(spec_basis[:,:tex_params]).float()[None,...]
+        
+        self.register_buffer('diff_mean', diff_mean)
+        self.register_buffer('diff_basis', diff_basis)
+        self.register_buffer('spec_mean', spec_mean)
+        self.register_buffer('spec_basis', spec_basis)
 
     def forward(self, texcode):
-        texture = self.texture_mean + (self.texture_basis*texcode[:,None,:]).sum(-1)
+        diff_albedo = self.diff_mean + (self.diff_basis*texcode[:,None,:]).sum(-1)
+        spec_albedo = self.spec_mean + (self.spec_basis*texcode[:,None,:]).sum(-1)
+        texture = torch.pow(0.6 * (diff_albedo + spec_albedo) + 1e-8, 1.0 / 2.2)
         texture = texture.reshape(texcode.shape[0], 512, 512, 3).permute(0,3,1,2)
         texture = F.interpolate(texture, [256, 256])
-        texture = texture[:,[2,1,0], :,:]
+        texture = texture[:,[2,1,0],:,:]
         return texture
 
 
