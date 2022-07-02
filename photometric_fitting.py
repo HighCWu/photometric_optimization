@@ -118,7 +118,7 @@ class PhotometricFitting(object):
             ## render
             albedos = self.flametex(tex) / 255.
             ops = self.render(vertices, trans_vertices, albedos, lights)
-            predicted_images = ops['images']
+            predicted_images = ops['images'] * ops['pos_mask']
             losses['photometric_texture'] = (image_masks * (ops['images'] - images).abs()).mean() * config.w_pho
 
             all_loss = 0.
@@ -161,6 +161,11 @@ class PhotometricFitting(object):
                 grid_image = np.minimum(np.maximum(grid_image, 0), 255).astype(np.uint8)
 
                 cv2.imwrite('{}/{}.jpg'.format(savefolder, k), grid_image)
+
+        rendered_image = grids['render']
+        rendered_image = (rendered_image.numpy().transpose(1, 2, 0).copy() * 255)[:, :, [2, 1, 0]]
+        rendered_image = np.minimum(np.maximum(rendered_image, 0), 255).astype(np.uint8)
+        cv2.imwrite('{}_flame_rendered.png'.format(savefolder), rendered_image)
 
         single_params = {
             'shape': shape.detach().cpu().numpy(),
