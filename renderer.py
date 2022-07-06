@@ -162,7 +162,7 @@ class Renderer(nn.Module):
         # remove inner mouth region
         transformed_normal_map = rendering[:, 3:6, :, :].detach()
         pos_mask = (transformed_normal_map[:, 2:, :, :] < -0.05).float()
-        pos_mask = ((1 - pos_mask).sum(1) < 0.5).float()
+        pos_mask = ((1 - pos_mask).sum(1) < 0.5).float()[:,None]
 
         # shading
         if lights is not None:
